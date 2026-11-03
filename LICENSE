@@ -1,0 +1,10 @@
+Copyright (c) 2026 Gamealia (https://gamealia.app)
+
+You may use, copy and run this software, unmodified, to develop, test and publish games on
+Gamealia. Any other use, modification or redistribution needs written permission
+(hello@gamealia.app).
+
+The bundle includes third-party open-source components (among them @modelcontextprotocol/sdk and
+zod, MIT); their licenses apply to those components.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

@@ -1,0 +1,17 @@
+{
+  "name": "gamealia-mcp",
+  "version": "0.1.17",
+  "description": "Gamealia MCP server: your AI coding assistant takes a web game from a local folder to published on Gamealia, where developers keep 60-70% of the ad revenue.",
+  "mcpName": "io.github.gamealia/gamealia-mcp",
+  "type": "module",
+  "bin": { "gamealia-mcp": "dist/gamealia-mcp.mjs" },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=22" },
+  "optionalDependencies": { "playwright-core": "1.63.0" },
+  "keywords": ["mcp", "mcp-server", "model-context-protocol", "gamedev", "html5-games", "web-games", "game-publishing", "ad-revenue-share", "unity-webgl", "godot", "phaser", "poki", "crazygames"],
+  "homepage": "https://gamealia.app/docs/publishing-with-ai",
+  "repository": { "type": "git", "url": "git+https://github.com/gamealia/gamealia-mcp.git" },
+  "bugs": { "email": "hello@gamealia.app" },
+  "author": "Gamealia <hello@gamealia.app> (https://gamealia.app)",
+  "license": "SEE LICENSE IN LICENSE"
+}
