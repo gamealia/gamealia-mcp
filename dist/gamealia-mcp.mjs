@@ -39103,7 +39103,7 @@ function staticChecks(a) {
 // ../autotest/src/scan.ts
 init_define_GAMEALIA_DOCS();
 var GAMEPLAY_STOP_RE = /\b(?:sdkG|g)ameplayStop\s*\(|\bGamealiaGameplayStop\b|["']game\.gameplayStop["']/;
-var isScannable = (path) => /\.(html?|m?js)$/i.test(path);
+var isScannable = (path) => /\.(html?|m?js)(\.(gz|br))?$/i.test(path) || /\.js\.unityweb$/i.test(path);
 var isAnalyzable = (path) => /\.(html?|m?js|css)(\.(gz|br))?$/i.test(path) || /\.js\.unityweb$/i.test(path) || /(^|\/)Build\/[^/]+\.json$/i.test(path);
 var URL_TOKEN = /(?:https?:)?\/\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}(?::\d+)?(?:\/[^\s"'`<>()\\]*)?/gi;
 var SRC_ASSIGN = /\.src\s*=\s*["'`]([^"'`\s]{4,})["'`]/gi;
@@ -39156,14 +39156,48 @@ var MAX_SCAN_BYTES = 5 * 1024 * 1024;
 var SOURCE_READ_MS = 1e4;
 var isCompressed = (p) => /\.(gz|br|unityweb)$/i.test(p);
 var READ_CONCURRENCY = 4;
+async function gunzipWeb(b, cap2 = MAX_SCAN_BYTES) {
+  if (typeof DecompressionStream === "undefined") return null;
+  const reader = new Blob([b]).stream().pipeThrough(new DecompressionStream("gzip")).getReader();
+  const chunks = [];
+  let total = 0;
+  let truncated = false;
+  try {
+    for (; ; ) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      total += value.length;
+      if (total >= cap2) {
+        truncated = total > cap2 || !(await reader.read()).done;
+        break;
+      }
+    }
+  } catch {
+    if (!total) return null;
+    truncated = true;
+  } finally {
+    reader.cancel().catch(() => {
+    });
+  }
+  const out = new Uint8Array(Math.min(total, cap2));
+  let off = 0;
+  for (const c of chunks) {
+    const n = Math.min(c.length, out.length - off);
+    out.set(c.subarray(0, n), off);
+    off += n;
+  }
+  return { data: out, truncated };
+}
 async function decompress(b, cap2 = MAX_SCAN_BYTES) {
+  const gzip = b[0] === 31 && b[1] === 139;
   let z2;
   try {
     z2 = await import("node:zlib");
+    if (typeof z2.createBrotliDecompress !== "function") throw new Error("no zlib");
   } catch {
-    return null;
+    return gzip ? gunzipWeb(b, cap2) : null;
   }
-  const gzip = b[0] === 31 && b[1] === 139;
   const stream = gzip ? z2.createGunzip() : z2.createBrotliDecompress();
   return new Promise((resolve12) => {
     const chunks = [];
@@ -43498,6 +43532,8 @@ var SHOT_AT_MS = 5e3;
 var INPUT_SETTLE_MS = 1e3;
 var AD_WATCH_MS = 2e3;
 var AD_FINISH_MS = 4e3;
+var LATE_LOAD_MS = 15e3;
+var lateLoadWaitMs = (graceMs) => Math.min(LATE_LOAD_MS, Math.floor(graceMs / 2));
 var POLL_MS = 200;
 var OP_MS = 1e4;
 var CLOSE_MS = 1e4;
@@ -43507,7 +43543,7 @@ var msg = (e) => e instanceof Error ? e.message : String(e);
 var EMPTY_STATE = { trace: [], adRequests: 0, adsShown: 0, error: null };
 var Unresponsive = class extends Error {
 };
-async function drive(o, p, timeoutMs, c) {
+async function drive(o, p, timeoutMs, graceMs, c) {
   const { obs } = c;
   const op = (what, fn) => c.aborted ? Promise.reject(new Error("aborted")) : withTimeout(fn(), OP_MS, what);
   const origin = gameOrigin(o.harnessUrl);
@@ -43569,9 +43605,13 @@ async function drive(o, p, timeoutMs, c) {
     obs.shotError = msg(e);
     throw e;
   }
-  while (!c.aborted && Date.now() - t0 < timeoutMs) {
+  const has = (type) => c.state.trace.some((t) => t.type === type);
+  const lateMs = lateLoadWaitMs(graceMs);
+  while (!c.aborted) {
     await read();
-    if (c.state.trace.some((t) => t.type === "loadingStop")) break;
+    if (has("loadingStop")) break;
+    const waited = Date.now() - t0;
+    if (waited >= timeoutMs && (!has("loadingStart") || waited >= timeoutMs + lateMs)) break;
     await sleep(POLL_MS);
   }
   obs.before = decode3(await png()).img;
@@ -43639,7 +43679,7 @@ async function runProfile(o, p, timeoutMs, graceMs) {
   let timer;
   const deadline = new Promise((r) => timer = setTimeout(() => r("deadline"), timeoutMs + graceMs));
   const outcome = await Promise.race([
-    drive(o, p, timeoutMs, c).then(
+    drive(o, p, timeoutMs, graceMs, c).then(
       () => "done",
       (e) => {
         obs.console.push({ level: "error", text: `autotest: ${e instanceof Unresponsive ? e.message : `error: ${msg(e)}`}` });
@@ -56890,7 +56930,7 @@ ${frameText(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.25" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.26" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (checkout in a new window, its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); all-ages content; the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
