@@ -72,3 +72,10 @@ More: [gamealia.app/developers](https://gamealia.app/developers) ·
 ## Contact
 
 hello@gamealia.app
+
+## Error reports
+
+When a tool fails, the server sends an anonymous report so we can fix it: the tool's name, the error
+message with file paths, emails, keys and other sites' addresses removed, the server version and the
+OS. Never your account, code, files or conversation. Turn it off with `GAMEALIA_TELEMETRY=0` (or
+`DO_NOT_TRACK=1`). Details: [privacy policy](https://gamealia.app/privacy).
