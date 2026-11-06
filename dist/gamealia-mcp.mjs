@@ -39119,7 +39119,7 @@ function urlTokens(text) {
   return [...out];
 }
 function scanSource(files) {
-  const out = { ads: [], trackers: [], miners: [], purchase: [], login: [], gameplayStop: false, scanned: files.length };
+  const out = { ads: [], trackers: [], miners: [], purchase: [], login: [], gameplayStop: false, engineBuild: false, scanned: files.length };
   const bucket = { ads: out.ads, tracker: out.trackers, miner: out.miners };
   for (const f of files) {
     for (const u of urlTokens(f.text)) {
@@ -39127,6 +39127,7 @@ function scanSource(files) {
       if (c) bucket[c].push({ path: f.path, pattern: u });
     }
     if (!out.gameplayStop && GAMEPLAY_STOP_RE.test(f.text)) out.gameplayStop = true;
+    if (!out.engineBuild && /\bcreateUnityInstance\b|\bGODOT_CONFIG\b|\bnew Engine\(/.test(f.text)) out.engineBuild = true;
     const lower = f.text.toLowerCase();
     for (const [cat, pats] of Object.entries(STATIC_PATTERNS))
       for (const p of pats) if (lower.includes(p)) out[cat].push({ path: f.path, pattern: p });
@@ -43326,7 +43327,9 @@ function checkInputResponse(before, after, target) {
 // ../autotest/src/checks/sdk.ts
 init_define_GAMEALIA_DOCS();
 function checkGameplayStop(f, o) {
-  return f.gameplayStop || o.trace.some((t) => t.type === "gameplayStop") ? result("gameplay_stop", "pass", "gameplayStop() is called") : result("gameplay_stop", "fail", "The game never calls gameplayStop(): call Gamealia.game.gameplayStop() when play stops (game over, pause menu, level end), and gameplayStart() when it resumes");
+  if (f.gameplayStop || o.trace.some((t) => t.type === "gameplayStop")) return result("gameplay_stop", "pass", "gameplayStop() is called");
+  if (f.engineBuild) return result("gameplay_stop", "warn", "Unity/Godot build: gameplayStop() could not be verified in the compiled code. Make sure the game calls it when play stops (game over, pause menu, level end)");
+  return result("gameplay_stop", "fail", "The game never calls gameplayStop(): call Gamealia.game.gameplayStop() when play stops (game over, pause menu, level end), and gameplayStart() when it resumes");
 }
 var SDK_URL_RE = /\/sdk\/(v1|crazygames|poki)\.js([?#]|$)/;
 function checkSdk(o, sdkScript = null, unreachable = []) {
@@ -56887,7 +56890,7 @@ ${frameText(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.24" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.25" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (checkout in a new window, its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); all-ages content; the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
