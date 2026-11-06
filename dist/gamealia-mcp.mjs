@@ -38593,6 +38593,26 @@ function jsRules(code, offset, ctx) {
   }
   aliases.delete("localStorage");
   aliases.delete("sessionStorage");
+  const bundledModules = /* @__PURE__ */ new Set();
+  const gumWrappers = [];
+  const isGum = (v) => !!v && /^(?:webkit|moz)?getUserMedia$/i.test(v);
+  for (let i = 0; i < T.length; i++) {
+    const x = T[i];
+    if (x.type === "str" && k.isP(i + 1, ":") && (k.isId(i + 2, "function") || k.isP(i + 2, "[") && k.isId(i + 3, "function")) && /\.(?:m?js|json)$/i.test(x.value))
+      bundledModules.add(x.value.replace(/^.*\//, "").toLowerCase());
+    let fn = -1;
+    if ((x.type === "id" || x.type === "str") && isGum(x.value) && k.isP(i + 1, ":") && k.isId(i + 2, "function")) fn = i + 2;
+    else if (x.type === "id" && isGum(x.value) && k.isProp(i) && k.isP(i + 1, "=") && k.isId(i + 2, "function")) fn = i + 2;
+    else if (x.type === "str" && isGum(x.value) && k.isP(i - 1, "[") && k.isP(i + 1, "]") && k.isP(i + 2, "=") && k.isId(i + 3, "function")) fn = i + 3;
+    else if (x.type === "id" && x.value === "function" && T[i + 1]?.type === "id" && /getUserMedia$/i.test(T[i + 1].value)) fn = i;
+    if (fn < 0) continue;
+    let o = fn + 1;
+    while (o < T.length && o < fn + 6 && !k.isP(o, "(")) o++;
+    if (!k.isP(o, "(")) continue;
+    const body = k.close(o) + 1;
+    if (k.isP(body, "{")) gumWrappers.push([body, k.close(body)]);
+  }
+  const inGumWrapper = (i) => gumWrappers.some(([a, b]) => i > a && i < b);
   const enumeration = (i, what) => prefixFiltered(k, i) ? hit("cross_game_storage", "suspicious", i, `${what} enumerates shared storage (filtered by a prefix; verify it only touches the game's own keys)`) : hit("cross_game_storage", "critical", i, `${what} enumerates storage shared by every game on the CDN origin`);
   const evalCall = (name, callee, open2) => {
     const end = k.close(open2);
@@ -38693,7 +38713,7 @@ function jsRules(code, offset, ctx) {
             hit("exfiltration", "suspicious", urlArg, `${x.value}() to ${u2.host}, which is not a declared backend host`);
         }
       }
-      if (x.value === "getUserMedia" && k.isP(i + 1, "(")) hit("permissions", "suspicious", i, "getUserMedia (camera/microphone)");
+      if (x.value === "getUserMedia" && k.isP(i + 1, "(") && !inGumWrapper(i)) hit("permissions", "suspicious", i, "getUserMedia (camera/microphone)");
       const m31 = k.member(i + 1);
       if (m31 && k.isP(m31.next, "(")) {
         if (x.value === "geolocation" && (m31.name === "getCurrentPosition" || m31.name === "watchPosition")) hit("permissions", "suspicious", i, `geolocation.${m31.name}`);
@@ -38752,6 +38772,7 @@ function jsRules(code, offset, ctx) {
       if (next && (CMP.has(next.value) || next.value === "+" || next.value === ":")) continue;
       const call = k.enclosingCall(i);
       if (call && (MSG_CALLS.has(call.name) || STR_METHODS.has(call.name) || MODULE_CALLS.has(call.name))) continue;
+      if (bundledModules.has(x.value.replace(/^.*\//, "").toLowerCase())) continue;
       const ref = x.value.replace(/^(\.\/)+/, "");
       const resolved = resolveRef2(dirOf2(ctx.file), x.value);
       const ext = /\.([a-z0-9]+)$/i.exec(ref)[1].toLowerCase();
@@ -56930,7 +56951,7 @@ ${frameText(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.26" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.27" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (checkout in a new window, its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); all-ages content; the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
