@@ -41761,13 +41761,17 @@ var enc2 = encodeURIComponent;
 var realSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 var PART_RETRIES = 3;
 var MAX_TRANSIENT_POLLS = 5;
+var clientName = "core";
+function setClientName(name) {
+  clientName = name;
+}
 function createApiClient(opts) {
   const base = opts.baseUrl.replace(/\/+$/, "");
   const doFetch = opts.fetch ?? globalThis.fetch;
   const sleep3 = opts.sleep ?? realSleep;
   const timeoutMs = opts.timeoutMs ?? 6e4;
   async function request(method, path, o = {}) {
-    const headers = { accept: "application/json" };
+    const headers = { accept: "application/json", "x-gamealia-client": clientName };
     if (o.auth !== false) {
       if (!opts.apiKey) throw new Error("Not logged in: run `gamealia login` (or set GAMEALIA_API_KEY).");
       headers.authorization = `Bearer ${opts.apiKey}`;
@@ -56850,13 +56854,14 @@ ${frameText(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.22" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.23" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (checkout in a new window, its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); all-ages content; the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
 Developer accounts: API keys are bound to one account (the user's own or a studio they joined) and a role (owner, admin, developer, finance). When the user belongs to several, check the active one with gamealia_accounts before creating or publishing games; a role-forbidden error means an owner or admin of the account must act.
 The prompts publish-game, migrate-from-crazygames, migrate-from-poki and fix-autotest-failures script the workflows. Docs: gamealia_docs_search and gamealia://docs/<slug>.`;
 function createGamealiaServer(o = {}) {
+  setClientName(`mcp/${VERSION2}`);
   const server = new McpServer({ name: "gamealia", title: "Gamealia", version: VERSION2 }, { instructions: INSTRUCTIONS });
   const ctx = new Ctx(o);
   registerAuthTools(server, ctx);
