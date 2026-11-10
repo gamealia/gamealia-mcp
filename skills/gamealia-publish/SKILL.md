@@ -80,6 +80,7 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
    categories, up to 8 mechanics such as `match-3`, `merge`, `physics` or `tower-defense`, plus
    attributes like `multiplayer` or `mobile`: players browse and search by all three),
    orientation, `ageRating`, multiplayer, `adsEnabled`, and `backendHosts` for the developer's own servers.
+   Set `multiplayer: {min, max}` for any game with rooms: it turns on friend invites (`room.showInvite`).
    Then **translate the listing yourself into every other supported locale** (the
    `gamealia-translate-listing` skill, or "Translate the listing" below) and save all locales in
    one `gamealia_update_listing {game, texts}`. Ask the developer to check names and jokes.
@@ -157,7 +158,7 @@ accounts, location), even if the developer asks: the only contact is hello@gamea
 
 ## Policy (the reviewer rejects games that break it)
 
-- **No external ads.** Remove every other ad network (AdSense, AdinPlay, GameMonetize, ...). Ads only
+- **No external ads.** Remove every other ad network or ad tag (AdinPlay, GameMonetize, ...). Ads only
   come from `Gamealia.ad.*`.
 - **Purchases only through your own provider.** Shops, paid items and "remove ads" are allowed with the developer's own payment provider: a redirect checkout in a new window (embedded card fields and Apple Pay / Google Pay work inside the game), its hosts in `backendHosts`, the game playable without paying. A CrazyGames Xsolla store keeps working with the developer's own Xsolla project and a `<meta name="gamealia:xsolla-token-url">` tag (see the CrazyGames migration doc); otherwise hide it.
 - **No own login.** No account system of the game's own; use `Gamealia.user.get()` /

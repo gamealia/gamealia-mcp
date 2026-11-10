@@ -87,7 +87,10 @@ Both resolve `{ shown, rewarded }` and never reject. Never show ads from other n
 ## Multiplayer rooms
 
 - `Gamealia.room.getJoinCode()`: the room code the player was invited to, or `null`.
-- `await Gamealia.room.inviteLink(code)` / `Gamealia.room.showInvite(code)`.
+- `await Gamealia.room.inviteLink(code)` / `Gamealia.room.showInvite(code)`. `showInvite` also lets
+  signed-in players invite online friends directly (real-time invite; the friend gets `code` unchanged
+  via `joinRoom`), and friends can invite from Gamealia once the game reports a room with `showInvite`
+  or `publish`. Only for games whose listing sets `multiplayer`.
 - `Gamealia.room.publish({ code, name, players, max, inProgress })` every 15 s while open;
   `Gamealia.room.unpublish()`.
 - `Gamealia.presence.setStatus(text)`.
