@@ -5,8 +5,8 @@
   "description": "Publish web games on Gamealia from your AI coding assistant: SDK, autotest, listing, upload.",
   "websiteUrl": "https://gamealia.app/docs/publishing-with-ai",
   "repository": { "url": "https://github.com/gamealia/gamealia-mcp", "source": "github" },
-  "version": "0.1.32",
+  "version": "0.1.33",
   "packages": [
-    { "registryType": "npm", "identifier": "gamealia-mcp", "version": "0.1.32", "transport": { "type": "stdio" } }
+    { "registryType": "npm", "identifier": "gamealia-mcp", "version": "0.1.33", "transport": { "type": "stdio" } }
   ]
 }
