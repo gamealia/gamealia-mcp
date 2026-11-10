@@ -141,7 +141,7 @@ do not rely on Gamealia's machine translation.
   `https://gamealia.app/game/<slug>?ref=dev` (dashboard: "Copy your link"), for the rest of that visit.
 - Launch partners (first game published by December 31, 2026): 70% on all their games until June 30, 2027, then 60%.
 - No exclusivity: games can stay on Poki, CrazyGames or other portals.
-- Payouts monthly in USD by the end of the following month, from USD 50 (PayPal, Payoneer, Wise, Mercado Pago).
+- Be honest: ads are not live yet (Gamealia is in the approval process to show ads), so there is no ad revenue and no payout has been made so far; never promise amounts or dates. Once ads are live: payouts monthly in USD from USD 50, by PayPal, Payoneer, Wise or bank transfer.
 - In-game purchases through the developer's own payment provider are allowed and 100% theirs for now; Gamealia's own purchases (planned 80% for the developer) are coming and will have to be supported.
 
 ## Support
