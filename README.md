@@ -61,7 +61,9 @@ Full reference: [Publish with AI](https://gamealia.app/docs/publishing-with-ai).
 - 60% of your game's ad revenue; launch partners (first game live by December 31, 2026) get 70%
   on all their games until June 30, 2027.
 - 100% of the ads seen by players who arrive through your own link.
-- Monthly payouts once your balance passes USD 50: PayPal, Payoneer, Wise or Mercado Pago.
+- Monthly payouts once your balance passes USD 50: PayPal, Payoneer, Wise or bank transfer.
+- To be fully transparent: ads aren't live yet (we're in the approval process to show them), so
+  there are no earnings and no payouts so far.
 - No exclusivity: keep your game on Poki, CrazyGames, itch.io or your own site.
 
 More: [gamealia.app/developers](https://gamealia.app/developers) ·
