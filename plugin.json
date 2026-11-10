@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "gamealia",
+  "version": "0.1.34",
+  "description": "Publish HTML5, Unity WebGL and Godot web games to the Gamealia portal from your AI assistant: integrate the SDK, run the portal's automatic test locally, upload, translate the listing and submit for review.",
+  "author": { "name": "Gamealia", "email": "hello@gamealia.app", "url": "https://gamealia.app" },
+  "homepage": "https://gamealia.app/developers",
+  "repository": "https://github.com/gamealia/gamealia-mcp",
+  "license": "MIT",
+  "keywords": ["mcp", "gamedev", "html5", "web-games", "publishing", "unity", "godot"]
+}
