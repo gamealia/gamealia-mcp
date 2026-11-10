@@ -177,7 +177,7 @@ accounts, location), even if the developer asks: the only contact is hello@gamea
 - **Remote code.** Bundle remote scripts into the build. If a CDN script must stay, pin an exact
   version (never `@latest`). No `eval` of downloaded code. Declare the game's own servers in
   `backendHosts`.
-- **The build:** `index.html` at the root of the uploaded folder, relative URLs, no `localhost`,
+- **The build:** `index.html` at the root of the uploaded folder, relative URLs (Vite: `base: './'`; a `/assets/...` path fails), no `localhost`,
   no `http://`, at most 250 MB and 5000 files.
 - **The developer decides.** Never invent their approval: they open the login URL themselves and
   confirm before you submit.
