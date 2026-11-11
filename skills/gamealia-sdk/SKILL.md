@@ -27,7 +27,7 @@ Gamealia.game.gameplayStop();  // required: play stops (game over, pause menu, l
 Gamealia.game.happyTime();     // a big moment (win, record)
 ```
 
-`init()` resolves with `{ environment, locale, gameId, user, joinRoom, device }`.
+`init()` resolves with `{ environment, locale, gameId, user, joinRoom, joinKey, device }`.
 
 ### Language (required: autotest check `locale`)
 
@@ -86,20 +86,39 @@ Both resolve `{ shown, rewarded }` and never reject. Never show ads from other n
 
 ## Multiplayer rooms
 
-- `Gamealia.room.getJoinCode()`: the room code the player was invited to, or `null`.
-- `await Gamealia.room.inviteLink(code)` / `Gamealia.room.showInvite(code)`. `showInvite` also lets
-  signed-in players invite online friends directly (real-time invite; the friend gets `code` unchanged
-  via `joinRoom`), and friends can invite from Gamealia once the game reports a room with `showInvite`
-  or `publish`. Only for games whose listing sets `multiplayer`.
-- `Gamealia.room.publish({ code, name, players, max, inProgress })` every 15 s while open;
-  `Gamealia.room.unpublish()`.
+The game's own server hosts the rooms and decides who enters; Gamealia adds friends, presence,
+invites, room lists, Join and the key prompt. Build any subset and declare it in the listing:
+`multiplayer: { min, max, features }`, features from `invites`, `publicRooms`, `friendsRooms`,
+`lockedRooms`, `lateJoin` (omitted = invites + publicRooms; locked/lateJoin need a rooms feature).
+
+- Join code, every multiplayer game: `const { joinRoom } = await Gamealia.init()` (=
+  `room.getJoinCode()`) and `Gamealia.on("roomJoin", (code, { key }) => connect(code, key))`.
+- Invites: `Gamealia.room.showInvite(code)` (sheet with the player's online friends) or
+  `await Gamealia.room.inviteLink(code)`. Friends can also invite from Gamealia once the game reports
+  a room. The invited friend gets `code` unchanged.
+- Rooms: `Gamealia.room.publish({ code, name, players, max, inProgress, visibility, locked, lateJoin })`,
+  again on every change (heartbeat every 15 s). `visibility: "public"` lists it for everyone,
+  `"friends"` only for the host's friends (needs a signed-in host). Full and started rooms stay
+  published; `Gamealia.room.unpublish()` only when the room closes.
+- Locked rooms (`locked: true`): never publish the key. The portal asks the joining player for it and
+  hands it to the game only: `Gamealia.room.getJoinKey()` / `key` in `roomJoin`. The server checks it
+  (constant-time compare); on a wrong key call `Gamealia.room.joinFailed("wrong-key")` and the portal
+  asks again. Also `"full"`, `"in-progress"`, `"closed"`.
+- Room pass: `await Gamealia.room.getJoinPass(code)` = JWT signed by Gamealia (ES256, JWKS
+  `https://api.gamealia.app/.well-known/jwks.json`, `iss` `https://api.gamealia.app`, `aud` = game id,
+  `typ` `"gamealia-room-pass"`, `room`, `sub`, `why` host|friend|invite, `host`, `by`, 120 s, `jti`) or
+  null. Friends-only rooms: the server must require a pass (`why: "friend"` with `host` = the room's
+  creator from `user.getToken()`, or `why: "invite"` with `by` in the room). Invited players may skip
+  the key. Reject unsigned mock passes (`mock.` prefix).
 - `Gamealia.presence.setStatus(text)`.
 - Declare the game's own servers in the listing's `backendHosts`.
+- Test joins locally with two tabs: see "Testing with the mock" in `gamealia://docs/en-multiplayer`.
+- The autotest `multiplayer` check (warning) says what is missing, with the exact call.
 
 ## Events
 
 `Gamealia.on(event, cb)` returns an unsubscribe function. Events: `adStart`, `adEnd`,
-`userChange`, `roomJoin`, `pause`, `resume`, `mute`, `unmute`.
+`userChange`, `roomJoin` (`(code, { key })`), `pause`, `resume`, `mute`, `unmute`, `localeChange`.
 
 ## Engines and migrations
 

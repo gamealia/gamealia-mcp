@@ -80,7 +80,10 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
    categories, up to 8 mechanics such as `match-3`, `merge`, `physics` or `tower-defense`, plus
    attributes like `multiplayer` or `mobile`: players browse and search by all three),
    orientation, `ageRating`, multiplayer, `adsEnabled`, and `backendHosts` for the developer's own servers.
-   Set `multiplayer: {min, max}` for any game with rooms: it turns on friend invites (`room.showInvite`).
+   Set `multiplayer: {min, max, features}` for any game with rooms, with the features the code really
+   supports (`invites`, `publicRooms`, `friendsRooms`, `lockedRooms`, `lateJoin`): they turn on friend
+   invites, the room lists, the key prompt and Join on the portal. The rooms stay on the developer's
+   server; friends-only and locked rooms need the server to check the room pass / key (SDK guide).
    Then **translate the listing yourself into every other supported locale** (the
    `gamealia-translate-listing` skill, or "Translate the listing" below) and save all locales in
    one `gamealia_update_listing {game, texts}`. Ask the developer to check names and jokes.
