@@ -115,10 +115,48 @@ invites, room lists, Join and the key prompt. Build any subset and declare it in
 - Test joins locally with two tabs: see "Testing with the mock" in `gamealia://docs/en-multiplayer`.
 - The autotest `multiplayer` check (warning) says what is missing, with the exact call.
 
+## Game chat
+
+A game's text chat goes through `Gamealia.chat` (not its own chat server): every message is tied to a
+Gamealia account (the username is shown), and Gamealia filters it (links, e-mails, @handles and phone
+numbers refused, insults masked), rate-limits it (1 per 1.5 s, 20 per minute) and moderates it
+(reports, blocks, 24 h mutes). Channels per game: `"global"` and `"room:<code>"`.
+
+- `await Gamealia.chat.join(channel)` → `{ ok, messages (last 50, 7 days), canSend, reason? }`;
+  `reason: "signin"` for guests (they read; show "Sign in to chat" and call `user.requestLogin()`),
+  `"muted"`, `"unavailable"`. `chat.leave(channel)`.
+- `await Gamealia.chat.send(channel, { text })` (max `chat.MAX_CHARS` = 200) or `{ sticker: "gg" }`
+  (your own id `^[a-z0-9_-]{1,24}$`, the game translates it: quick phrases) → `{ ok, message }` or
+  `{ ok: false, error }` (`signin`, `rate`, `muted`, `blocked-content`, `too-long`, ...).
+  `chat.check(text)` runs the filter locally.
+- `chat.onMessage(m => ...)` (each message once, own included; `m.from.id` = the player's per-game id,
+  `m.from.username`, `m.mine`), `chat.onDelete(({ channel, ids }) => ...)` (moderation or blocks: remove
+  them), `chat.onState(({ channel, canSend, reason }) => ...)` (sign in/out, mute).
+- `chat.report(messageId)`, `chat.block(messageId)` (blocks the sender on all of Gamealia).
+- Locally (localhost, mock) it is an in-memory echo through the same filter; in preview/autotest
+  `canSend` is false (`"unavailable"`). Voice chat may use the developer's own service.
+
+## In-game purchases (store)
+
+Sell through your own Xsolla project with `Gamealia.store` (Gamealia takes no part of the sale): add
+`<meta name="gamealia:xsolla-project-id" content="123456">` and
+`<meta name="gamealia:xsolla-token-url" content="https://your-server/xsolla-token">` (an endpoint that
+receives `{ gamealiaToken }`, verifies it and answers `{ token }`, an Xsolla user token: example in
+`https://gamealia.app/downloads/examples/xsolla-token-endpoint/`).
+
+- `Gamealia.store.isAvailable` (false without both tags: every call rejects `storeUnavailable`),
+  `setSandbox(true)` for test payments, `getCatalogItems()`, `getPlayerInventory()`,
+  `buyItem(sku)` (call it from a click: opens Xsolla's checkout in a new window; resolves when paid,
+  rejects `purchaseCancelled`), `consumeItem(sku, quantity)`. Guests get `userNotAuthenticated`: ask
+  them to sign in.
+- Grant what was paid on your server (verify with Xsolla, consume there), never only in the client.
+  Declare your server and the Xsolla hosts in `backendHosts`. The game stays playable without paying.
+
 ## Events
 
 `Gamealia.on(event, cb)` returns an unsubscribe function. Events: `adStart`, `adEnd`,
-`userChange`, `roomJoin` (`(code, { key })`), `pause`, `resume`, `mute`, `unmute`, `localeChange`.
+`userChange`, `roomJoin` (`(code, { key })`), `pause`, `resume`, `mute`, `unmute`, `localeChange`
+(chat events arrive through `chat.onMessage` / `onDelete` / `onState`).
 
 ## Engines and migrations
 
@@ -131,8 +169,9 @@ invites, room lists, Join and the key prompt. Build any subset and declare it in
 
 ## Rules that affect code
 
-No other ad networks, purchases only through your own payment provider (checkout in a new window,
-hosts in `backendHosts`, playable without paying), no own login (guests play), no
+No other ad networks, purchases only through your own payment provider (`Gamealia.store` with your
+own Xsolla project, or any provider with checkout in a new window; hosts in `backendHosts`, playable
+without paying), text chat only through `Gamealia.chat`, no own login (guests play), no
 trackers, no `document.cookie`, no other games' localStorage keys, no `window.parent`/`top`, no
 service workers, no `eval` of downloaded code. Bundle remote scripts or pin exact versions.
 Microphone or camera only when declared in the listing (manual review).
