@@ -38933,6 +38933,37 @@ function elements(text) {
   return out;
 }
 var JS_TYPES = /* @__PURE__ */ new Set(["", "text/javascript", "application/javascript", "module", "text/ecmascript", "application/ecmascript"]);
+var DATA_SCRIPT_TYPE = /^(application\/(ld\+)?json|application\/[a-z.+-]*\+json|importmap|speculationrules|text\/(html|template|plain|csv|markdown|x-template|x-handlebars[a-z-]*|x-mustache|x-tmpl|x-shader[a-z/-]*|x-vertex[a-z/-]*|x-fragment[a-z/-]*)|x-shader\/[a-z-]+)$/;
+var DATA_URI_PAYLOAD = /(data:[a-z]+\/[a-z0-9.+-]+(?:;[a-z0-9=.-]+)*;base64,)([A-Za-z0-9+/=\s]{256,})/gi;
+function blankInlineData(html) {
+  let blanked = 0;
+  const spaces = (s) => {
+    blanked += s.length;
+    return s.replace(/[^\n]/g, " ");
+  };
+  const lower = html.toLowerCase();
+  let out = "";
+  let from = 0;
+  for (let at2 = lower.indexOf("<script", 0); at2 >= 0; ) {
+    const gt = html.indexOf(">", at2 + 7);
+    if (gt < 0) break;
+    const attrText = html.slice(at2 + 7, Math.min(gt, at2 + 7 + 2e3));
+    const type = (/\btype\s*=\s*["']?([^"'\s>]+)/i.exec(attrText)?.[1] ?? "").toLowerCase();
+    const start = gt + 1;
+    if (!DATA_SCRIPT_TYPE.test(type)) {
+      at2 = lower.indexOf("<script", start);
+      continue;
+    }
+    const close = lower.indexOf("</script", start);
+    const end = close < 0 ? html.length : close;
+    out += html.slice(from, start) + spaces(html.slice(start, end));
+    from = end;
+    at2 = close < 0 ? -1 : lower.indexOf("<script", end + 8);
+  }
+  out += html.slice(from);
+  out = out.replace(DATA_URI_PAYLOAD, (_m, head, payload) => head + spaces(payload));
+  return { text: out, kept: html.length - blanked };
+}
 var NO_LOAD_RELS = /* @__PURE__ */ new Set(["canonical", "alternate", "author", "license", "help", "dns-prefetch", "preconnect", "prefetch", "search", "me", "next", "prev", "bookmark", "external", "nofollow", "noopener", "noreferrer"]);
 var SKIP_REF = /^(#|%23|data:|blob:|javascript:|about:|mailto:|tel:)|\{\{|<%|\$\{/i;
 function checkRef(ctx, ref, pos, kind, hits, out) {
@@ -39016,14 +39047,15 @@ function scriptRefs(html, path) {
   return out;
 }
 function htmlRules(html, ctx) {
-  const truncated = html.length > MAX_MARKUP_BYTES;
+  const data = html.length > MAX_MARKUP_BYTES ? blankInlineData(html) : { text: html, kept: html.length };
+  const truncated = data.kept > MAX_MARKUP_BYTES;
   const out = { hits: [], sdkScript: false, scripts: [], inline: [], truncated };
-  const text = blankBlocks(truncated ? html.slice(0, MAX_MARKUP_BYTES) : html, "<!--", "-->");
+  const text = blankBlocks(truncated ? data.text.slice(0, MAX_MARKUP_BYTES) : data.text, "<!--", "-->");
   for (const el of elements(text)) {
     const a = el.attrs;
     if (el.tag === "script") {
       if (a.src !== void 0) checkRef(ctx, a.src, el.start, "script", out.hits, out);
-      else if (JS_TYPES.has((a.type ?? "").toLowerCase()) && el.body !== void 0) {
+      else if (el.body !== void 0 && (JS_TYPES.has((a.type ?? "").toLowerCase()) || !DATA_SCRIPT_TYPE.test((a.type ?? "").toLowerCase()))) {
         out.inline.push(el.body);
         out.hits.push(...jsRules(el.body, el.bodyAt, ctx));
       }
@@ -39176,7 +39208,8 @@ function staticChecks(a) {
           a.skipped ? `${a.skipped} files not read${list(a.skippedPaths, a.skipped)}` : "",
           a.truncated ? `${a.truncated} truncated${list(a.truncatedPaths, a.truncated)}` : ""
         ].filter(Boolean).join(" / ");
-        return result(id, "warn", `${PASS[id]} in what was analyzed, but the build was not fully analyzed (${gaps})`, {
+        const fix = a.truncated ? " Fix: keep each HTML file's code and markup under 2 MB and each script under 5 MB: move big inline code into .js files (inline JSON and base64 assets do not count)." : "";
+        return result(id, "warn", `${PASS[id]} in what was analyzed, but the build was not fully analyzed (${gaps}).${fix}`, {
           skipped: a.skipped,
           truncated: a.truncated,
           ...a.skippedPaths?.length ? { skippedPaths: a.skippedPaths.slice(0, GAP_PATHS) } : {},
@@ -57794,7 +57827,7 @@ ${frameText2(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.50" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.51" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStart() when play starts, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (Gamealia.store with their own Xsolla project, or checkout in a new window; its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); a text chat between players can optionally use Gamealia.chat (account-linked, filtered and moderated by Gamealia); no sexual, gore, hateful or adult content, and an honest ageRating (all, 7, 12 or 16; required to submit); the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
