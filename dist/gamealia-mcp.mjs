@@ -43766,8 +43766,8 @@ function checkTranslations(runs) {
     return result(
       "translations",
       "warn",
-      `The game is translated (it starts in ${b.locale} when the portal is in ${b.locale}), but when the player switched the portal to ${sw.to} while playing, its text did not change. ${HOW}`,
-      { to: sw.to, sample: words(sw.after?.text ?? "").slice(0, 12) }
+      `The game is translated (it starts with different text in ${a.locale} and in ${b.locale}), but when the player switched the portal from ${a.locale} to ${sw.to} while playing, its text did not change. ${HOW}`,
+      { from: a.locale, to: sw.to, sample: words(sw.after?.text ?? "").slice(0, 12) }
     );
   if (cross === true) return result("translations", "pass", `The game showed different text in ${a.locale} and ${b.locale}`);
   return result("translations", "pass", "Not compared: no text on the page could be read (canvas text) or too little text on screen");
@@ -57846,7 +57846,7 @@ ${frameText2(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.52" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.53" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStart() when play starts, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (Gamealia.store with their own Xsolla project, or checkout in a new window; its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); a text chat between players can optionally use Gamealia.chat (account-linked, filtered and moderated by Gamealia); no sexual, gore, hateful or adult content, and an honest ageRating (all, 7, 12 or 16; required to submit); the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
