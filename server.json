@@ -2,11 +2,27 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.gamealia/gamealia-mcp",
   "title": "Gamealia",
-  "description": "Publish web games on Gamealia from your AI coding assistant: SDK, autotest, listing, upload.",
+  "description": "Publish web games on Gamealia from your AI assistant: SDK, autotest, listing, upload. Local or remote.",
   "websiteUrl": "https://gamealia.app/docs/publishing-with-ai",
-  "repository": { "url": "https://github.com/gamealia/gamealia-mcp", "source": "github" },
-  "version": "0.1.48",
+  "repository": {
+    "url": "https://github.com/gamealia/gamealia-mcp",
+    "source": "github"
+  },
+  "version": "0.1.50",
   "packages": [
-    { "registryType": "npm", "identifier": "gamealia-mcp", "version": "0.1.48", "transport": { "type": "stdio" } }
+    {
+      "registryType": "npm",
+      "identifier": "gamealia-mcp",
+      "version": "0.1.50",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.gamealia.app/mcp"
+    }
   ]
 }
