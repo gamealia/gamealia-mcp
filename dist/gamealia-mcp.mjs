@@ -37619,6 +37619,45 @@ init_define_GAMEALIA_DOCS();
 // ../autotest/src/static/index.ts
 init_define_GAMEALIA_DOCS();
 
+// ../autotest/src/static/inert.ts
+init_define_GAMEALIA_DOCS();
+var MEDIA_DATA_URI = /(data:(?:image|audio|video|font)\/[a-z0-9.+-]+(?:;[a-z0-9=.-]+)*;base64,)([A-Za-z0-9+/=]{256,})/gi;
+var DATA_SCRIPT_TYPE = /^(application\/(ld\+)?json|application\/[a-z.+-]*\+json|importmap|speculationrules|text\/(html|template|plain|csv|markdown|x-template|x-handlebars[a-z-]*|x-mustache|x-tmpl|x-shader[a-z/-]*|x-vertex[a-z/-]*|x-fragment[a-z/-]*)|x-shader\/[a-z-]+)$/;
+var isHtmlPath = (p) => /\.(html?|xhtml)$/i.test(p.replace(/\.(gz|br|unityweb)$/i, ""));
+function blankInert(text, path = "") {
+  let blanked = 0;
+  const spaces = (s) => {
+    blanked += s.length;
+    return s.replace(/[^\n]/g, " ");
+  };
+  let out = text;
+  if (isHtmlPath(path) || /<script\b/i.test(text.slice(0, 4096))) out = blankDataScripts(out, spaces);
+  out = out.replace(MEDIA_DATA_URI, (_m, head, payload) => head + spaces(payload));
+  return { text: out, kept: text.length - blanked };
+}
+function blankDataScripts(html, spaces) {
+  const lower = html.toLowerCase();
+  let out = "";
+  let from = 0;
+  for (let at2 = lower.indexOf("<script", 0); at2 >= 0; ) {
+    const gt = html.indexOf(">", at2 + 7);
+    if (gt < 0) break;
+    const attrText = html.slice(at2 + 7, Math.min(gt, at2 + 7 + 2e3));
+    const type = (/\btype\s*=\s*["']?([^"'\s>]+)/i.exec(attrText)?.[1] ?? "").toLowerCase();
+    const start = gt + 1;
+    if (!DATA_SCRIPT_TYPE.test(type)) {
+      at2 = lower.indexOf("<script", start);
+      continue;
+    }
+    const close = lower.indexOf("</script", start);
+    const end = close < 0 ? html.length : close;
+    out += html.slice(from, start) + spaces(html.slice(start, end));
+    from = end;
+    at2 = close < 0 ? -1 : lower.indexOf("<script", end + 8);
+  }
+  return out + html.slice(from);
+}
+
 // ../shared/src/index.ts
 init_define_GAMEALIA_DOCS();
 
@@ -38933,37 +38972,6 @@ function elements(text) {
   return out;
 }
 var JS_TYPES = /* @__PURE__ */ new Set(["", "text/javascript", "application/javascript", "module", "text/ecmascript", "application/ecmascript"]);
-var DATA_SCRIPT_TYPE = /^(application\/(ld\+)?json|application\/[a-z.+-]*\+json|importmap|speculationrules|text\/(html|template|plain|csv|markdown|x-template|x-handlebars[a-z-]*|x-mustache|x-tmpl|x-shader[a-z/-]*|x-vertex[a-z/-]*|x-fragment[a-z/-]*)|x-shader\/[a-z-]+)$/;
-var DATA_URI_PAYLOAD = /(data:[a-z]+\/[a-z0-9.+-]+(?:;[a-z0-9=.-]+)*;base64,)([A-Za-z0-9+/=\s]{256,})/gi;
-function blankInlineData(html) {
-  let blanked = 0;
-  const spaces = (s) => {
-    blanked += s.length;
-    return s.replace(/[^\n]/g, " ");
-  };
-  const lower = html.toLowerCase();
-  let out = "";
-  let from = 0;
-  for (let at2 = lower.indexOf("<script", 0); at2 >= 0; ) {
-    const gt = html.indexOf(">", at2 + 7);
-    if (gt < 0) break;
-    const attrText = html.slice(at2 + 7, Math.min(gt, at2 + 7 + 2e3));
-    const type = (/\btype\s*=\s*["']?([^"'\s>]+)/i.exec(attrText)?.[1] ?? "").toLowerCase();
-    const start = gt + 1;
-    if (!DATA_SCRIPT_TYPE.test(type)) {
-      at2 = lower.indexOf("<script", start);
-      continue;
-    }
-    const close = lower.indexOf("</script", start);
-    const end = close < 0 ? html.length : close;
-    out += html.slice(from, start) + spaces(html.slice(start, end));
-    from = end;
-    at2 = close < 0 ? -1 : lower.indexOf("<script", end + 8);
-  }
-  out += html.slice(from);
-  out = out.replace(DATA_URI_PAYLOAD, (_m, head, payload) => head + spaces(payload));
-  return { text: out, kept: html.length - blanked };
-}
 var NO_LOAD_RELS = /* @__PURE__ */ new Set(["canonical", "alternate", "author", "license", "help", "dns-prefetch", "preconnect", "prefetch", "search", "me", "next", "prev", "bookmark", "external", "nofollow", "noopener", "noreferrer"]);
 var SKIP_REF = /^(#|%23|data:|blob:|javascript:|about:|mailto:|tel:)|\{\{|<%|\$\{/i;
 function checkRef(ctx, ref, pos, kind, hits, out) {
@@ -39046,11 +39054,11 @@ function scriptRefs(html, path) {
   }
   return out;
 }
-function htmlRules(html, ctx) {
-  const data = html.length > MAX_MARKUP_BYTES ? blankInlineData(html) : { text: html, kept: html.length };
+function htmlRules(html, ctx, kept) {
+  const data = kept !== void 0 ? { text: html, kept } : html.length > MAX_MARKUP_BYTES ? blankInert(html, "index.html") : { text: html, kept: html.length };
   const truncated = data.kept > MAX_MARKUP_BYTES;
   const out = { hits: [], sdkScript: false, scripts: [], inline: [], truncated };
-  const text = blankBlocks(truncated ? data.text.slice(0, MAX_MARKUP_BYTES) : data.text, "<!--", "-->");
+  const text = blankBlocks(truncated ? data.text.slice(0, MAX_MARKUP_BYTES + (data.text.length - data.kept)) : data.text, "<!--", "-->");
   for (const el of elements(text)) {
     const a = el.attrs;
     if (el.tag === "script") {
@@ -39109,6 +39117,14 @@ function contextAt(text, line, pos) {
   const p = pos ?? 0;
   return text.slice(Math.max(0, p - 2e3), p + 2e3);
 }
+var MAX_CODE_BYTES = 5 * 1024 * 1024;
+function cutAt(text, cap2) {
+  let seen = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text.charCodeAt(i) !== 32 && ++seen >= cap2) return i + 1;
+  }
+  return text.length;
+}
 function analyzeBuild(input2) {
   const paths = input2.paths ? new PathIndex(input2.paths) : null;
   const scriptHosts = (input2.sdkHosts ?? DEFAULT_SDK_HOSTS).map((h) => h.toLowerCase());
@@ -39136,7 +39152,7 @@ function analyzeBuild(input2) {
   for (const f of input2.files) {
     if (!isHtml(f.path)) continue;
     analyzed++;
-    const r = htmlRules(f.text, ctxFor(logicalPath(f.path)));
+    const r = htmlRules(f.text, ctxFor(logicalPath(f.path)), f.kept);
     if (r.truncated && !f.truncated) truncated++, truncatedPaths.push(f.path);
     sdkScript ||= r.sdkScript;
     for (const s of r.scripts) scripts.add(s);
@@ -39147,14 +39163,15 @@ function analyzeBuild(input2) {
     if (isHtml(f.path)) continue;
     const ctx = ctxFor(logicalPath(f.path));
     const starts = lineStarts(f.text);
-    if (isJs(f.path) || scripts.has(f.path) || scripts.has(logicalPath(f.path))) {
-      analyzed++;
-      add(f.path, f.text, starts, jsRules(f.text, 0, ctx));
-    } else if (isCss(f.path)) {
-      analyzed++;
-      if (f.text.length > MAX_MARKUP_BYTES && !f.truncated) truncated++, truncatedPaths.push(f.path);
-      add(f.path, f.text, starts, cssRules(f.text, 0, ctx));
-    }
+    const isScript = isJs(f.path) || scripts.has(f.path) || scripts.has(logicalPath(f.path));
+    if (!isScript && !isCss(f.path)) continue;
+    analyzed++;
+    const inert = f.kept !== void 0 ? { text: f.text, kept: f.kept } : blankInert(f.text, f.path);
+    const cap2 = isScript ? MAX_CODE_BYTES : MAX_MARKUP_BYTES;
+    const over = inert.kept > cap2;
+    if (over && !f.truncated) truncated++, truncatedPaths.push(f.path);
+    const text = over ? inert.text.slice(0, cutAt(inert.text, cap2)) : inert.text;
+    add(f.path, f.text, starts, isScript ? jsRules(text, 0, ctx) : cssRules(text, 0, ctx));
   }
   let engine = null;
   if (paths) {
@@ -39282,7 +39299,7 @@ function withTimeout(p, ms, what) {
 
 // ../autotest/src/sources.ts
 var MAX_SCAN_FILES = 200;
-var MAX_SCAN_BYTES = 5 * 1024 * 1024;
+var MAX_SCAN_BYTES = 12 * 1024 * 1024;
 var SOURCE_READ_MS = 1e4;
 var isCompressed = (p) => /\.(gz|br|unityweb)$/i.test(p);
 var READ_CONCURRENCY = 4;
@@ -39384,11 +39401,13 @@ async function readSources(r, o) {
         if (!raw) return null;
         const d = await decompress(raw);
         if (!d) return "skip";
-        return { path: p, text: new TextDecoder().decode(d.data), truncated: d.truncated };
+        const inert2 = blankInert(new TextDecoder().decode(d.data), p);
+        return { path: p, text: inert2.text, kept: inert2.kept, truncated: d.truncated };
       }
       const t = await withTimeout(r.sourceFiles(p), SOURCE_READ_MS, `read ${p}`);
       if (t == null) return null;
-      return { path: p, text: t.slice(0, MAX_SCAN_BYTES), truncated: t.length > MAX_SCAN_BYTES };
+      const inert = blankInert(t.length > MAX_SCAN_BYTES ? t.slice(0, MAX_SCAN_BYTES) : t, p);
+      return { path: p, text: inert.text, kept: inert.kept, truncated: t.length > MAX_SCAN_BYTES };
     } catch {
       return "skip";
     }
@@ -57827,7 +57846,7 @@ ${frameText2(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.51" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.52" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStart() when play starts, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (Gamealia.store with their own Xsolla project, or checkout in a new window; its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); a text chat between players can optionally use Gamealia.chat (account-linked, filtered and moderated by Gamealia); no sexual, gore, hateful or adult content, and an honest ageRating (all, 7, 12 or 16; required to submit); the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
