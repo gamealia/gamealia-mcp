@@ -117,7 +117,7 @@ invites, room lists, Join and the key prompt. Build any subset and declare it in
 
 ## Game chat
 
-A game's text chat goes through `Gamealia.chat` (not its own chat server): every message is tied to a
+Optional: a game's text chat can go through `Gamealia.chat` instead of its own server: every message is tied to a
 Gamealia account (the username is shown), and Gamealia filters it (links, e-mails, @handles and phone
 numbers refused, insults masked), rate-limits it (1 per 1.5 s, 20 per minute) and moderates it
 (reports, blocks, 24 h mutes). Channels per game: `"global"` and `"room:<code>"`.
@@ -171,7 +171,7 @@ receives `{ gamealiaToken }`, verifies it and answers `{ token }`, an Xsolla use
 
 No other ad networks, purchases only through your own payment provider (`Gamealia.store` with your
 own Xsolla project, or any provider with checkout in a new window; hosts in `backendHosts`, playable
-without paying), text chat only through `Gamealia.chat`, no own login (guests play), no
+without paying), no own login (guests play), no
 trackers, no `document.cookie`, no other games' localStorage keys, no `window.parent`/`top`, no
 service workers, no `eval` of downloaded code. Bundle remote scripts or pin exact versions.
 Microphone or camera only when declared in the listing (manual review).
