@@ -56,8 +56,12 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
    that players see the game in the closest language it has, so an English-only game is English for
    everyone, and offer to translate the UI strings yourself into at least es, pt-BR, fr, de, ru, ja
    and zh-CN (all 32 is best), in a strings table keyed by locale. The autotest warns
-   (`translations`) when the text on screen is the same with the portal in two languages, or when
-   it does not change after a mid-run `localeChange`.
+   (`translations`) when the text on screen (page text and text drawn on 2D canvases) is the same
+   with the portal in two languages, when it does not change after a mid-run `localeChange`, or
+   when the game is only partly translated; `hardcoded_text` lists the player-visible strings in
+   the code that skip the strings table. Fix what they name. Other warnings (`load_time`, `fps`,
+   `alive`, `play_errors`, `visual_review` on the server) never fail the version: fix the real
+   ones and tell the developer about the rest.
 5. **Lint.** `gamealia_check_integration {dir}`; fix every `fail`.
 6. **Build.** `gamealia_build {dir}` when the project has a build step.
 7. **Test.**
