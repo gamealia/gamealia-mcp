@@ -110,6 +110,34 @@ Other tools: `gamealia_list_games`, `gamealia_list_versions`, `gamealia_get_stat
 `gamealia_get_earnings`, `gamealia_docs_search` (docs are also MCP resources
 `gamealia://docs/<slug>`), `gamealia_logout`, `gamealia_install_agent_kit`.
 
+## Mobile games (store links, no web build)
+
+When the developer's game is a downloadable Android or iOS app with no web version, list it for
+free in Gamealia's **Mobile games** section instead of the web workflow. There is no build, no
+upload, no autotest and no SDK; mobile listings show no ads, so no revenue share applies.
+
+1. `gamealia_whoami` (and `gamealia_accounts` if they belong to several accounts).
+2. `gamealia_create_game` with `kind: "mobile"`, `slug`, `title`, `description`, `tags` and
+   `storeLinks: { android?, ios? }`. Only the official https app pages are accepted:
+   `https://play.google.com/store/apps/details?id=<package>` and
+   `https://apps.apple.com/<country>/app/<name>/id<number>` (other parameters are dropped). Ask the
+   developer for the links; never guess them.
+3. `gamealia_update_listing`: `texts` for every supported locale (translate them yourself, as
+   below), and `ageRating` judged from the app's real content (tell the developer what you chose).
+4. Cover (>= 1200x630) and square thumbnail (>= 512x512): `coverPath`/`thumbPath` (for example
+   made from the store screenshots or icon with `gamealia_generate_cover`), or the developer
+   uploads them in the dashboard.
+5. Show the developer the listing (texts, links, images, age rating) and ask.
+6. Only after they confirm: `gamealia_submit_for_review {game}`. No version or upload is needed.
+7. `gamealia_get_status {game}` shows the review state, the draft vs the approved listing and the
+   reject reasons with fixes.
+
+Every change is reviewed by a person: the first publication and every later edit (texts, links,
+images, tags, age rating) stay in a draft until they are approved, while the public page keeps
+the approved listing. Updates to a live listing need `notes` (at least 10 characters) on what
+changed. `gamealia_upload_version` refuses mobile listings. Invite the developer to publish a web
+version later as a separate web game: it is played right on Gamealia and can earn from ads.
+
 ## Accounts and roles
 
 An API key is bound to one developer account and the developer's role in it, so every tool acts on
