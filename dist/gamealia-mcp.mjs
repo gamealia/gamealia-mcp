@@ -38582,6 +38582,7 @@ function prefixFiltered(k, i) {
   for (let j = i; j < k.t.length && j < i + 80; j++) {
     const x = k.t[j];
     if (x.type === "id" && (x.value === "startsWith" || x.value === "indexOf" || x.value === "keyPrefix")) return true;
+    if (x.type === "re" && /^\/\^[\w$:.\-\\]/.test(x.value) && k.isP(j + 1, ".") && k.isId(j + 2, "test")) return true;
   }
   return false;
 }
@@ -38693,7 +38694,7 @@ function jsRules(code, offset, ctx) {
     if (k.isP(body, "{")) gumWrappers.push([body, k.close(body)]);
   }
   const inGumWrapper = (i) => gumWrappers.some(([a, b]) => i > a && i < b);
-  const enumeration = (i, what) => prefixFiltered(k, i) ? hit("cross_game_storage", "suspicious", i, `${what} enumerates shared storage (filtered by a prefix; verify it only touches the game's own keys)`) : hit("cross_game_storage", "critical", i, `${what} enumerates storage shared by every game on the CDN origin`);
+  const enumeration = (i, what) => prefixFiltered(k, i) ? hit("cross_game_storage", "suspicious", i, `${what} enumerates shared storage (filtered by a prefix; verify it only touches the game's own keys)`) : hit("cross_game_storage", "critical", i, `${what} enumerates storage shared by every game on the CDN origin. Fix: read or remove only your own keys by name (localStorage.removeItem("mygame_save")), or filter with k.startsWith("mygame_") / /^mygame_/.test(k) before touching a key`);
   const evalCall = (name2, callee, open2) => {
     const end = k.close(open2);
     const args2 = T.slice(open2 + 1, end);
@@ -55606,7 +55607,7 @@ var TRANSLATE_INTROS = {
 // package.json
 var package_default = {
   name: "@gamealia/mcp",
-  version: "0.1.60",
+  version: "0.1.61",
   private: true,
   type: "module",
   description: "Gamealia MCP server: an AI coding assistant takes a game from a local folder to published on Gamealia.",
@@ -58707,7 +58708,7 @@ ${frameText2(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.60" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.61" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStart() when play starts, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (Gamealia.store with their own Xsolla project, or checkout in a new window; its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); a text chat between players can optionally use Gamealia.chat (account-linked, filtered and moderated by Gamealia); no sexual, gore, hateful or adult content, and an honest ageRating (all, 7, 12 or 16; required to submit); the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
