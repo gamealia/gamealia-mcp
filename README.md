@@ -1,5 +1,7 @@
 # Gamealia MCP server
 
+[![gamealia/gamealia-mcp MCP server](https://glama.ai/mcp/servers/gamealia/gamealia-mcp/badges/score.svg)](https://glama.ai/mcp/servers/gamealia/gamealia-mcp)
+
 Publish your web game on [Gamealia](https://gamealia.app) from your AI coding assistant, and keep
 **60–70% of the ad revenue** (100% from the players you bring), with **no exclusivity**.
 
