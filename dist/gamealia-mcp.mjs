@@ -55651,7 +55651,7 @@ var TRANSLATE_INTROS = {
 // package.json
 var package_default = {
   name: "@gamealia/mcp",
-  version: "0.1.65",
+  version: "0.1.66",
   private: true,
   type: "module",
   description: "Gamealia MCP server: an AI coding assistant takes a game from a local folder to published on Gamealia.",
@@ -58752,7 +58752,7 @@ ${frameText2(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.65" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.66" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStart() when play starts, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (Gamealia.store with their own Xsolla project, or checkout in a new window; its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); a text chat between players can optionally use Gamealia.chat (account-linked, filtered and moderated by Gamealia); no sexual, gore, hateful or adult content, and an honest ageRating (all, 7, 12 or 16; required to submit); the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
