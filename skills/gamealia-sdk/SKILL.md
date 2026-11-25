@@ -73,7 +73,7 @@ Both resolve `{ shown, rewarded }` and never reject. Never show ads from other n
 
 - `await Gamealia.user.get()`: `{ id, username, avatarUrl }` or `null` for a guest.
 - `await Gamealia.user.getToken()`: a signed token for the game's own backend to verify, or `null`.
-- `await Gamealia.user.requestLogin()`: shows the portal sign-in. Never build a login of your own.
+- `await Gamealia.user.requestLogin()`: shows the portal sign-in. Never build a login of your own (linking an existing account on your servers with a one-time code is allowed: see the user-accounts doc).
 - `Gamealia.user.onChange(cb)`. Guests must always be able to play.
 
 ## Saves
