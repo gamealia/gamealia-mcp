@@ -84,6 +84,9 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
    categories, up to 8 mechanics such as `match-3`, `merge`, `physics` or `tower-defense`, plus
    attributes like `multiplayer` or `mobile`: players browse and search by all three),
    orientation, `ageRating`, multiplayer, `adsEnabled`, and `backendHosts` for the developer's own servers.
+   Made at a game jam? When the developer gives you a jam code (like `JAM27-ROS`, from their jam site's
+   page at https://gamealia.app/jams), pass `jamCode`: the game also shows on that site's page and goes
+   first in review. Never invent a code.
    Set `multiplayer: {min, max, features}` for any game with rooms, with the features the code really
    supports (`invites`, `publicRooms`, `friendsRooms`, `lockedRooms`, `lateJoin`): they turn on friend
    invites, the room lists, the key prompt and Join on the portal. The rooms stay on the developer's

@@ -8,12 +8,12 @@
     "url": "https://github.com/gamealia/gamealia-mcp",
     "source": "github"
   },
-  "version": "0.1.67",
+  "version": "0.1.68",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "gamealia-mcp",
-      "version": "0.1.67",
+      "version": "0.1.68",
       "transport": {
         "type": "stdio"
       }
