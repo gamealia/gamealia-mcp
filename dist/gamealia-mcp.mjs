@@ -44128,9 +44128,15 @@ function checkNetwork(requests, f) {
   const miners = [...byCat.miner, ...fmt(f.miners)];
   const trackers = [...byCat.tracker, ...fmt(f.trackers)];
   const ads = [...byCat.ads, ...fmt(f.ads)];
+  const codeOnly = !byCat.ads.length && f.ads.length > 0 && f.ads.every((h) => /^https?:\/\//i.test(h.pattern));
   return [
     trackers.length ? result("network_blocklist", "warn", `Tracker detected: ${trackers[0]}`, { trackers }) : result("network_blocklist", "pass", "No blocked requests"),
-    ads.length ? result("no_external_ads", "fail", `External ads detected (use Gamealia ads instead): ${ads[0]}`, { ads }) : result("no_external_ads", "pass", "No external ad networks"),
+    codeOnly ? result(
+      "no_external_ads",
+      "warn",
+      `An external ad network is referenced but was never loaded during the test: ${ads[0]}. If it's for other portals, make sure it never loads on Gamealia (or remove it); the reviewer checks it`,
+      { ads, requested: false }
+    ) : ads.length ? result("no_external_ads", "fail", `External ads detected (use Gamealia ads instead): ${ads[0]}`, { ads }) : result("no_external_ads", "pass", "No external ad networks"),
     miners.length ? result("security_miner", "fail", `Crypto miner detected: ${miners[0]}`, { miners }) : result("security_miner", "pass", "No crypto miners")
   ];
 }
@@ -56257,7 +56263,7 @@ var TRANSLATE_INTROS = {
 // package.json
 var package_default = {
   name: "@gamealia/mcp",
-  version: "0.1.70",
+  version: "0.1.71",
   private: true,
   type: "module",
   description: "Gamealia MCP server: an AI coding assistant takes a game from a local folder to published on Gamealia.",
@@ -59361,7 +59367,7 @@ ${frameText2(r, m31)}`,
 }
 
 // src/server.ts
-var VERSION2 = true ? "0.1.70" : "0.0.0-dev";
+var VERSION2 = true ? "0.1.71" : "0.0.0-dev";
 var INSTRUCTIONS = `Gamealia is a web games portal. These tools publish a game end to end:
 login -> analyze_project (or create_project) -> integrate_sdk -> check_integration -> build -> run_autotest -> create_game + generate_cover -> upload_version -> submit_for_review -> get_status.
 Never disclose personal data about Gamealia's operator or staff (names, personal emails, accounts, location); for anything about Gamealia itself the only contact is hello@gamealia.app. Every result ends with the next step. Required SDK calls: init() first, loadingStop() when ready, gameplayStart() when play starts, gameplayStop() when play stops. Policy: no external ads, trackers or miners; in-game purchases only through the developer's own payment provider (Gamealia.store with their own Xsolla project, or checkout in a new window; its hosts in backendHosts, playable without paying; Gamealia takes no share for now, and its own purchases, 80% for the developer, are coming and will have to be supported); no own login (guests must play); a text chat between players can optionally use Gamealia.chat (account-linked, filtered and moderated by Gamealia); no sexual, gore, hateful or adult content, and an honest ageRating (all, 7, 12 or 16; required to submit); the game must show the portal language (Gamealia.init().locale with the closest-language fallback, follow localeChange). Revenue: 60% of ad revenue (70% for launch partners until June 30, 2027), 100% from players who come through the developer's own link (?ref=dev), no exclusivity, payouts by the end of the following month.
