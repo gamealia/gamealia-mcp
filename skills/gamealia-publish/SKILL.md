@@ -47,6 +47,7 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
    `Gamealia.game.happyTime()` on wins, `Gamealia.ad.requestMidgame()` at natural breaks (pause and
    mute while the ad plays), `Gamealia.ad.requestRewarded()` only for optional rewards. The
    `gamealia-sdk` skill has the full SDK reference.
+   Silence all sound on `Gamealia.on("mute", ...)` and restore it on `unmute` (warning `mute_response`); keep memory under 512 MB (warning `memory`).
    **Make the game use the portal language before uploading** (required, autotest check `locale`):
    `const { locale } = await Gamealia.init(); setLanguage(pickLang(locale));
    Gamealia.on("localeChange", c => setLanguage(pickLang(c)));`, where `pickLang` falls back to the
@@ -96,6 +97,8 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
    one `gamealia_update_listing {game, texts}`. Ask the developer to check names and jokes.
 9. **Cover.** `gamealia_generate_cover {screenshot, title, game}` from the desktop autotest
    screenshot (or use the developer's own art: cover >= 1200x630, thumbnail >= 512x512).
+   On a game that is already live, a new cover or thumbnail waits for a person's review: the live
+   images stay until it is approved, and the tool result says so. Tell the developer.
 10. **Upload.** `gamealia_upload_version {dir, game}`: zips the build, uploads it and waits for the
     server autotest. Read the report; fix and upload again if it fails.
 11. **Submit, only after the developer confirms.** Show them the result and ask. Then

@@ -29,6 +29,14 @@ Gamealia.game.happyTime();     // a big moment (win, record)
 
 `init()` resolves with `{ environment, locale, gameId, user, joinRoom, joinKey, device }`.
 
+Optional: call `Gamealia.game.setProgress(n * 100 / N)` when the player advances (level n of N; 0..100,
+shown on the player's "continue playing" row), and `Gamealia.game.setContext({ level, mode, build })` with
+up to 10 string/number/bool values for crash reports and player feedback (never player names or e-mails).
+Uncaught script errors are reported automatically (Insights: crash rates while loading and while playing);
+call `Gamealia.game.reportError(message)` for errors the game catches itself.
+Screenshots for player feedback (only when the player opts in) are automatic from the largest canvas; a game
+without a canvas, or one that wants to pick its image, calls `Gamealia.game.onCapture(() => canvas | dataUrl | null)`.
+
 ### Language (required: autotest check `locale`)
 
 `locale` is the language the player chose on the portal (one of 32 codes: en, es, pt-BR, ja, ar...),
@@ -72,7 +80,7 @@ Both resolve `{ shown, rewarded }` and never reject. Never show ads from other n
 ## Players
 
 - `await Gamealia.user.get()`: `{ id, username, avatarUrl }` or `null` for a guest.
-- `await Gamealia.user.getToken()`: a signed token for the game's own backend to verify, or `null`.
+- `await Gamealia.user.getToken()`: a signed token for the game's own backend to verify, or `null` (ES256, 5 min; JWKS URL, `iss`, `aud` and `kid` are on the game's dashboard page, "Player tokens").
 - `await Gamealia.user.requestLogin()`: shows the portal sign-in. Never build a login of your own (linking an existing account on your servers with a one-time code is allowed: see the user-accounts doc).
 - `Gamealia.user.onChange(cb)`. Guests must always be able to play.
 
@@ -105,12 +113,22 @@ invites, room lists, Join and the key prompt. Build any subset and declare it in
   (constant-time compare); on a wrong key call `Gamealia.room.joinFailed("wrong-key")` and the portal
   asks again. Also `"full"`, `"in-progress"`, `"closed"`.
 - Room pass: `await Gamealia.room.getJoinPass(code)` = JWT signed by Gamealia (ES256, JWKS
-  `https://api.gamealia.app/.well-known/jwks.json`, `iss` `https://api.gamealia.app`, `aud` = game id,
+  `https://api.gamealia.app/.well-known/jwks.json` or, with a per-game key, `https://api.gamealia.app/v1/games/<game id>/jwks.json`, `iss` `https://api.gamealia.app`, `aud` = game id,
   `typ` `"gamealia-room-pass"`, `room`, `sub`, `why` host|friend|invite, `host`, `by`, 120 s, `jti`) or
   null. Friends-only rooms: the server must require a pass (`why: "friend"` with `host` = the room's
   creator from `user.getToken()`, or `why: "invite"` with `by` in the room). Invited players may skip
   the key. Reject unsigned mock passes (`mock.` prefix).
 - `Gamealia.presence.setStatus(text)`.
+- Friends (signed-in players; ids are per game, like `user.get().id`): `await Gamealia.friends.list()` ->
+  `{ ok, friends: [{ id, username, avatarUrl, online, playingThisGame, room: { code, name, players, max, locked } | null }] }`
+  (guests: empty list; mock: two fake friends). `await Gamealia.friends.invite(friend.id, code)` ->
+  `{ ok, delivered: "app" | "pushed" | false }` (one per friend every 30 s). `Gamealia.friends.onChange(() => list())`
+  (at most every 5 s). `Gamealia.room.onJoin((code, { key }) => connect(code, key))` = `on("roomJoin")`.
+- Parties (portal groups of up to 8 friends; the leader picks the game): nothing new to build. The leader's game
+  creates a room and publishes it (`visibility: "friends"`); every other member arrives through `joinRoom` /
+  `roomJoin`, as with an invite. Optional: `await Gamealia.party.get()` -> `{ id, isLeader, members: [{ id, username,
+  avatarUrl, isLeader }], size, roomCode } | null` and `Gamealia.party.onChange(cb)` for a lobby. Mock party: see "Testing
+  with the mock" in the multiplayer docs.
 - Declare the game's own servers in the listing's `backendHosts`.
 - Test joins locally with two tabs: see "Testing with the mock" in `gamealia://docs/en-multiplayer`.
 - The autotest `multiplayer` check (warning) says what is missing, with the exact call.
@@ -155,8 +173,10 @@ receives `{ gamealiaToken }`, verifies it and answers `{ token }`, an Xsolla use
 ## Events
 
 `Gamealia.on(event, cb)` returns an unsubscribe function. Events: `adStart`, `adEnd`,
-`userChange`, `roomJoin` (`(code, { key })`), `pause`, `resume`, `mute`, `unmute`, `localeChange`
+`userChange`, `roomJoin` (`(code, { key })`), `pause`, `resume`, `mute`, `unmute`, `localeChange`,
+`friendsChange`, `partyChange`
 (chat events arrive through `chat.onMessage` / `onDelete` / `onState`).
+Honor `mute` / `unmute` (silence all sound, restore it): the autotest's `mute_response` check warns when sound keeps playing after `mute`.
 
 ## Engines and migrations
 
