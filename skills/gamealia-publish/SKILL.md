@@ -33,7 +33,7 @@ Run the steps in order. Each tool result ends with `next` suggestions: follow th
      `gamealia_accounts {action: "switch", account}` before creating or publishing anything. A
      switch without a stored key is a new login: show the URL and code again, then
      `gamealia_login {wait: true}`.
-2. **Analyze.** `gamealia_analyze_project {dir}`: engine (HTML5 + framework, Unity WebGL, Godot web,
+2. **Analyze.** `gamealia_analyze_project {dir}`: engine (HTML5 + framework, Unity WebGL, Godot 4 / 3.5 web,
    GameMaker, Construct), build command, output folder, entry html, existing CrazyGames/Poki SDKs,
    and policy findings with file and line. No game yet? `gamealia_create_project {dir, template,
    title}` (templates: vanilla, phaser, pixi, multiplayer) creates one already integrated.

@@ -161,7 +161,12 @@ receives `{ gamealiaToken }`, verifies it and answers `{ token }`, an Xsolla use
 ## Engines and migrations
 
 - **Unity WebGL:** `Gamealia.jslib` plugin plus the `Gamealia.cs` wrapper. **Godot:** the
-  `addons/gamealia` addon. `gamealia_integrate_sdk` adds both.
+  `addons/gamealia` addon (a `Gamealia` autoload), one for Godot 4 and one for Godot 3.5, picked
+  from `project.godot` (`config_version=5` is Godot 4, `4` is Godot 3). `gamealia_integrate_sdk`
+  adds them. Godot 4: `var info := await Gamealia.init()`. Godot 3.5:
+  `var info = yield(Gamealia.init(), "completed")`. Then show `info.locale`, call
+  `Gamealia.loading_stop()`, `gameplay_start()`/`gameplay_stop()`. Do not call `window.Gamealia`
+  through `JavaScript.eval` / `JavaScriptBridge.eval` by hand.
 - **CrazyGames SDK:** load `https://gamealia.app/sdk/crazygames.js` instead of the CrazyGames
   script; `CrazyGames.SDK` calls keep working.
 - **Poki SDK:** load `https://gamealia.app/sdk/poki.js` instead of the Poki script; `PokiSDK`
